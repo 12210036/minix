@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 
+// -----------------------mantente enfocado-------------
 
 int manejador_errores_x11(Display* dpy, XErrorEvent* ev) {
     return 0;
@@ -40,7 +41,6 @@ int start_x = 0, start_y = 0, win_x = 0, win_y = 0;
 unsigned int win_w = 0, win_h = 0;
 int boton_presionado = 0;
 
-// Función corregida para ejecutar comandos en segundo plano (soporta hasta 3 argumentos)
 void ejecutar_comando(const char* cmd, const char* arg1 = nullptr, const char* arg2 = nullptr, const char* arg3 = nullptr) {
     if (fork() == 0) {
         if (fork() == 0) {
@@ -237,7 +237,6 @@ int main() {
         registrar_tecla(dpy, code, Mod1Mask | ShiftMask, root);
     }
 
-    // --- Atajos de Volumen (Únicamente Alt + Flechas / Alt + M) ---
     KeyCode up_code   = XKeysymToKeycode(dpy, XK_Up);
     KeyCode down_code = XKeysymToKeycode(dpy, XK_Down);
     KeyCode m_code    = XKeysymToKeycode(dpy, XK_m);
@@ -246,7 +245,6 @@ int main() {
     registrar_tecla(dpy, down_code, Mod1Mask, root);
     registrar_tecla(dpy, m_code, Mod1Mask, root);
 
-    // Atajos de ratón
     XGrabButton(dpy, Button1, Mod1Mask, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
     XGrabButton(dpy, Button3, Mod1Mask, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
 
@@ -349,12 +347,12 @@ int main() {
                     auto& lista = escritorios[ws_actual];
                     for (auto& v : lista) {
                         if (v.id == win_moviendose) {
-                            if (boton_presionado == Button1) { // Alt + Click Izquierdo: Mover
+                            if (boton_presionado == Button1) {
                                 v.fx = win_x + diff_x;
                                 v.fy = win_y + diff_y;
                                 XMoveWindow(dpy, v.id, v.fx, v.fy);
                             }
-                            else if (boton_presionado == Button3) { // Alt + Click Derecho: Redimensionar
+                            else if (boton_presionado == Button3) {
                                 v.fancho = std::max(100u, (unsigned int)(win_w + diff_x));
                                 v.falto = std::max(100u, (unsigned int)(win_h + diff_y));
                                 XResizeWindow(dpy, v.id, v.fancho, v.falto);
@@ -374,7 +372,6 @@ int main() {
             case KeyPress: {
                 KeySym keysym = XLookupKeysym(&ev.xkey, 0);
 
-                // --- Control de Volumen (Alt + Flecha Arriba / Alt + Flecha Abajo / Alt + M) ---
                 if (keysym == XK_Up && (ev.xkey.state & Mod1Mask)) {
                     ejecutar_comando("pactl", "set-sink-volume", "@DEFAULT_SINK@", "+5%");
                 }
@@ -385,7 +382,6 @@ int main() {
                     ejecutar_comando("pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle");
                 }
 
-                // --- Atajos estándar ---
                 else if (keysym >= XK_1 && keysym <= XK_4) {
                     int target_ws = keysym - XK_1;
 
