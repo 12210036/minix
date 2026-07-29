@@ -1,6 +1,6 @@
 # minix
-[](imagen.png)
-[](imagen2.png)
+![](imagen.png)
+![](imagen2.png)
 Un Window Manager minimalista mixto (tiling y floating) para X11 escrito en C++ con un lanzador de aplicaciones desarrollada en c++ y raylib. 
 
 ## Requisitos
