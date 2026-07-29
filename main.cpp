@@ -230,6 +230,9 @@ int main() {
     KeyCode f_code = XKeysymToKeycode(dpy, XK_f);
     registrar_tecla(dpy, f_code, Mod1Mask, root);
 
+    KeyCode r_code = XKeysymToKeycode(dpy, XK_r);
+    registrar_tecla(dpy, r_code, Mod1Mask, root);
+
     KeySym teclas_ws[] = {XK_1, XK_2, XK_3, XK_4};
     for (int i = 0; i < 4; ++i) {
         KeyCode code = XKeysymToKeycode(dpy, teclas_ws[i]);
@@ -271,6 +274,28 @@ int main() {
                         XFlush(dpy);
                         break;
                     }
+                   	if (class_name == "launcher" || class_name == "Launcher") {
+                   	    int monitor_ancho = DisplayWidth(dpy, DefaultScreen(dpy));
+                   	    int monitor_alto = DisplayHeight(dpy, DefaultScreen(dpy));
+                   	
+                   	    int launcher_ancho = 500;
+                   	    int launcher_alto = 300;
+                   	    int lx = (monitor_ancho - launcher_ancho) / 2;
+                   	    int ly = (monitor_alto - launcher_alto) / 2;
+                   	
+                   	    // Acomodar y centrar en pantalla
+                   	    XMoveResizeWindow(dpy, w, lx, ly, launcher_ancho, launcher_alto);
+                   	
+                   	    // Mapear y enfocar
+                   	    XMapWindow(dpy, w);
+                   	    XRaiseWindow(dpy, w);
+                   	    XSetInputFocus(dpy, w, RevertToPointerRoot, CurrentTime);
+                   	    XFlush(dpy);
+                   	
+                   	    // BREAK IMPORTANTE: Evita que entre a 'escritorios[ws_actual]'
+                   	    // para que no afecte ni sea afectada por el Tiling Layout.
+                   	    break; 
+                   	}
                 }
 
                 XWindowAttributes wa;
@@ -413,6 +438,9 @@ int main() {
                 else if (ev.xkey.keycode == n_code && (ev.xkey.state & Mod1Mask)) {
                     ejecutar_comando("firefox");
                 }
+                else if (ev.xkey.keycode == r_code && (ev.xkey.state & Mod1Mask)) {
+                                    ejecutar_comando("./rofi-cpp");
+                                }
                 else if (ev.xkey.keycode == q_code && (ev.xkey.state & Mod1Mask)) {
                     XCloseDisplay(dpy);
                     return 0;
