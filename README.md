@@ -82,7 +82,7 @@ La tecla modificadora principal es **`Alt`** (`Mod1Mask`).
 | `Alt + Flecha Abajo` | Bajar volumen (-5%) |
 | `Alt + m` | Mutear / desmutear el audio |
 
-##Detalles
+## Detalles
 
 ### lanzardor de aplicaciones
 si prefieres usar otro lanzador como rofi o dmenu, te recomiendo que vallas a esta parte del codigo y la cambies por la que prefieras
