@@ -278,23 +278,24 @@ int main() {
                    	    int monitor_ancho = DisplayWidth(dpy, DefaultScreen(dpy));
                    	    int monitor_alto = DisplayHeight(dpy, DefaultScreen(dpy));
                    	
-                   	    int launcher_ancho = 500;
-                   	    int launcher_alto = 300;
+                   	    // Obtener las dimensiones reales que pidió Raylib
+                   	    XWindowAttributes wa;
+                   	    XGetWindowAttributes(dpy, w, &wa);
+                   	    int launcher_ancho = wa.width;
+                   	    int launcher_alto = wa.height;
+                   	
                    	    int lx = (monitor_ancho - launcher_ancho) / 2;
                    	    int ly = (monitor_alto - launcher_alto) / 2;
                    	
-                   	    // Acomodar y centrar en pantalla
+                   	    // Centrar respetando el tamaño nativo de Raylib
                    	    XMoveResizeWindow(dpy, w, lx, ly, launcher_ancho, launcher_alto);
                    	
-                   	    // Mapear y enfocar
                    	    XMapWindow(dpy, w);
                    	    XRaiseWindow(dpy, w);
                    	    XSetInputFocus(dpy, w, RevertToPointerRoot, CurrentTime);
                    	    XFlush(dpy);
                    	
-                   	    // BREAK IMPORTANTE: Evita que entre a 'escritorios[ws_actual]'
-                   	    // para que no afecte ni sea afectada por el Tiling Layout.
-                   	    break; 
+                   	    break; // Evita que entre al tiling layout
                    	}
                 }
 
@@ -439,8 +440,9 @@ int main() {
                     ejecutar_comando("firefox");
                 }
                 else if (ev.xkey.keycode == r_code && (ev.xkey.state & Mod1Mask)) {
-                                    ejecutar_comando("./rofi-cpp");
-                                }
+                    // Usa la ruta absoluta donde está compilado tu lanzador
+                    ejecutar_comando("/home/dogma25/proyecto_WM/rofi-cpp");
+                }
                 else if (ev.xkey.keycode == q_code && (ev.xkey.state & Mod1Mask)) {
                     XCloseDisplay(dpy);
                     return 0;

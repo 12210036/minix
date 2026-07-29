@@ -8,26 +8,31 @@
 
 namespace fs = std::filesystem;
 
+// --- PALETA EN ESCALA DE GRISES ---
+Color FondoOscuro    = { 18,  18,  18, 255 }; // Gris casi negro (#121212)
+Color GrisCaja       = { 38,  38,  38, 255 }; // Gris oscuro para la barra (#262626)
+Color ResaltadoGris  = { 220, 220, 220, 255 }; // Gris claro/blanco para elemento activo
+Color TextoBlanco    = { 240, 240, 240, 255 }; // Texto general
+Color TextoGrisMedio = { 140, 140, 140, 255 }; // Texto secundario / contador
+Color TextoGrisAlerta= { 180, 180, 180, 255 }; // Mensajes de alerta
+
 struct AppEntry {
     std::string nombre;
     std::string ejecutable;
 };
 
-// Limpia el comando 'Exec' de los archivos .desktop (quita %u, %f, etc.)
 std::string limpiarComandoExec(const std::string& execRaw) {
     std::string cmd = execRaw;
     size_t pos = cmd.find('%');
     if (pos != std::string::npos) {
         cmd = cmd.substr(0, pos);
     }
-    // Eliminar espacios al final
     while (!cmd.empty() && (cmd.back() == ' ' || cmd.back() == '\t')) {
         cmd.pop_back();
     }
     return cmd;
 }
 
-// Escanea un directorio en busca de archivos .desktop
 void escanearDirectorioDesktop(const std::string& ruta, std::vector<AppEntry>& lista) {
     if (!fs::exists(ruta) || !fs::is_directory(ruta)) return;
 
@@ -54,7 +59,6 @@ void escanearDirectorioDesktop(const std::string& ruta, std::vector<AppEntry>& l
                 }
             }
 
-            // Guardar solo si es una aplicación válida y visible en menús
             if (esApp && !noDisplay && !nombre.empty() && !exec.empty()) {
                 lista.push_back({nombre, exec});
             }
@@ -62,20 +66,17 @@ void escanearDirectorioDesktop(const std::string& ruta, std::vector<AppEntry>& l
     }
 }
 
-// Carga las apps de los directorios estándar de Linux
 std::vector<AppEntry> cargarAplicacionesDesktop() {
     std::vector<AppEntry> lista;
 
     escanearDirectorioDesktop("/usr/share/applications", lista);
 
-    // También buscar en el home del usuario (~/.local/share/applications)
     const char* home = std::getenv("HOME");
     if (home) {
         std::string userPath = std::string(home) + "/.local/share/applications";
         escanearDirectorioDesktop(userPath, lista);
     }
 
-    // Ordenar alfabéticamente por nombre
     std::sort(lista.begin(), lista.end(), [](const AppEntry& a, const AppEntry& b) {
         return a.nombre < b.nombre;
     });
@@ -84,19 +85,16 @@ std::vector<AppEntry> cargarAplicacionesDesktop() {
 }
 
 int main() {
-    // 1. Escanear aplicaciones .desktop al iniciar
     std::vector<AppEntry> apps = cargarAplicacionesDesktop();
 
-    // 2. Configurar ventana de Raylib (Flotante)
     SetConfigFlags(FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_TOPMOST);
-    
-    int anchoVentana = 500;
-    int altoVentana = 300;
-    
+
+    int anchoVentana = 800;
+    int altoVentana = 600;
+
     InitWindow(anchoVentana, altoVentana, "Launcher");
     SetTargetFPS(60);
 
-    // Centrar en pantalla
     int monitor = GetCurrentMonitor();
     int posX = (GetMonitorWidth(monitor) - anchoVentana) / 2;
     int posY = (GetMonitorHeight(monitor) - altoVentana) / 2;
@@ -105,37 +103,34 @@ int main() {
     std::string input = "";
     int sel = 0;
     int scrollOffset = 0;
-    const int maxVisibles = 9;
+    const int maxVisibles = 13;
 
-    // Convertir string a minúsculas para búsqueda insensible a mayúsculas
     auto toLower = [](std::string str) {
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
         return str;
     };
 
-    // 3. Loop principal
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_ESCAPE)) break;
 
-        // Capturar texto
+        // Entrada de teclado
         int k = GetCharPressed();
         while (k > 0) {
-            if (k >= 32 && k <= 125) { 
-                input += (char)k; 
+            if (k >= 32 && k <= 125) {
+                input += (char)k;
                 sel = 0;
                 scrollOffset = 0;
             }
             k = GetCharPressed();
         }
 
-        // Borrar texto
-        if (IsKeyPressed(KEY_BACKSPACE) && !input.empty()) { 
-            input.pop_back(); 
+        if (IsKeyPressed(KEY_BACKSPACE) && !input.empty()) {
+            input.pop_back();
             sel = 0;
             scrollOffset = 0;
         }
 
-        // Filtrar apps por Nombre o Comando (Insensible a mayúsculas)
+        // Búsqueda
         std::vector<AppEntry> match;
         std::string query = toLower(input);
         for (const auto& a : apps) {
@@ -144,7 +139,7 @@ int main() {
             }
         }
 
-        // Navegación con teclado
+        // Navegación
         if (!match.empty()) {
             if (IsKeyPressed(KEY_DOWN)) {
                 sel = (sel + 1) % match.size();
@@ -153,14 +148,12 @@ int main() {
                 sel = (sel - 1 + match.size()) % match.size();
             }
 
-            // Ajuste de Scroll automático
             if (sel < scrollOffset) {
                 scrollOffset = sel;
             } else if (sel >= scrollOffset + maxVisibles) {
                 scrollOffset = sel - maxVisibles + 1;
             }
 
-            // Ejecutar con ENTER
             if (IsKeyPressed(KEY_ENTER)) {
                 std::string cmd = match[sel].ejecutable + " &";
                 std::system(cmd.c_str());
@@ -168,34 +161,40 @@ int main() {
             }
         }
 
-        // 4. Renderizado
+        int margen = 15;
+        int anchoCaja = anchoVentana - (margen * 2);
+
         BeginDrawing();
-            ClearBackground(GetColor(0x1e1e2eff)); // Catppuccin Base
+            ClearBackground(FondoOscuro);
 
-            // Caja de búsqueda
-            DrawRectangle(10, 10, 480, 35, GetColor(0x313244ff));
-            DrawText(TextFormat("> %s", input.c_str()), 20, 18, 20, RAYWHITE);
+            // 1. Buscador
+            DrawRectangle(margen, 15, anchoCaja, 40, GrisCaja);
+            DrawText(TextFormat("> %s", input.c_str()), margen + 15, 24, 20, TextoBlanco);
 
-            // Lista de resultados
+            // 2. Resultados
             if (match.empty()) {
-                DrawText("Sin coincidencias", 20, 60, 16, RED);
+                DrawText("Sin coincidencias", margen + 10, 75, 18, TextoGrisAlerta);
             } else {
                 for (int i = 0; i < maxVisibles && (i + scrollOffset) < (int)match.size(); i++) {
                     int indexReal = i + scrollOffset;
-                    Color c = (indexReal == sel) ? GetColor(0xcba6f7ff) : RAYWHITE;
-                    
-                    // Fondo resaltado si está seleccionado
-                    if (indexReal == sel) {
-                        DrawRectangle(10, 55 + (i * 35), 480, 30, GetColor(0x45475a80));
+                    bool estaSeleccionado = (indexReal == sel);
+                    int posY_Fila = 68 + (i * 38);
+
+                    if (estaSeleccionado) {
+                        DrawRectangle(margen, posY_Fila, anchoCaja, 34, ResaltadoGris);
                     }
 
-                    // Dibuja el Nombre de la Aplicación
-                    DrawText(match[indexReal].nombre.c_str(), 20, 60 + (i * 35), 18, c);
+                    // Si la fila está seleccionada, el texto pasa a gris oscuro/negro para contraste
+                    Color colorTexto = estaSeleccionado ? FondoOscuro : TextoBlanco;
+                    DrawText(match[indexReal].nombre.c_str(), margen + 15, posY_Fila + 7, 18, colorTexto);
                 }
 
-                // Contador de elementos
+                // 3. Contador X/Y
                 std::string contador = std::to_string(sel + 1) + "/" + std::to_string(match.size());
-                DrawText(contador.c_str(), 420, 18, 16, GRAY);
+                int anchoTextoContador = MeasureText(contador.c_str(), 16);
+                int posXContador = (anchoVentana - margen) - anchoTextoContador - 15;
+                
+                DrawText(contador.c_str(), posXContador, 26, 16, TextoGrisMedio);
             }
         EndDrawing();
     }
