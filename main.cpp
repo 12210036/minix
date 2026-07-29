@@ -204,7 +204,7 @@ int main() {
 
     Window root = DefaultRootWindow(dpy);
 
-    unsigned long color_escritorio = obtener_color_hex(dpy, "#04b864");
+    unsigned long color_escritorio = obtener_color_hex(dpy, "#000000");
     XSetWindowBackground(dpy, root, color_escritorio);
     XClearWindow(dpy, root);
     XFlush(dpy);
@@ -232,6 +232,9 @@ int main() {
 
     KeyCode r_code = XKeysymToKeycode(dpy, XK_r);
     registrar_tecla(dpy, r_code, Mod1Mask, root);
+
+    KeyCode p_code = XKeysymToKeycode(dpy, XK_p);
+    registrar_tecla(dpy, p_code, Mod1Mask, root);
 
     KeySym teclas_ws[] = {XK_1, XK_2, XK_3, XK_4};
     for (int i = 0; i < 4; ++i) {
@@ -442,6 +445,10 @@ int main() {
                 else if (ev.xkey.keycode == r_code && (ev.xkey.state & Mod1Mask)) {
                     // Usa la ruta absoluta donde está compilado tu lanzador
                     ejecutar_comando("/home/dogma25/proyecto_WM/rofi-cpp");
+                }
+                else if (ev.xkey.keycode == p_code && (ev.xkey.state & Mod1Mask)) {
+                                    // Usa la ruta absoluta donde está compilado tu lanzador
+                   ejecutar_comando("sh", "-c", "maim ~/captura_$(date +%s).png");
                 }
                 else if (ev.xkey.keycode == q_code && (ev.xkey.state & Mod1Mask)) {
                     XCloseDisplay(dpy);
